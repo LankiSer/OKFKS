@@ -8,9 +8,14 @@ def caesar_cipher(text, shift, encrypt=True):
     result = ""
     for char in text:
         if char.isalpha():
-            shift_direction = shift if encrypt else -shift
-            offset = 65 if char.isupper() else 97
-            result += chr((ord(char) - offset + shift_direction) % 26 + offset)
+            if 'А' <= char <= 'Я' or 'а' <= char <= 'я':  # Русский алфавит
+                shift_direction = shift if encrypt else -shift
+                offset = 1040 if char.isupper() else 1072  # Кодировка для 'А' и 'а'
+                result += chr((ord(char) - offset + shift_direction) % 33 + offset)
+            else:  # Латинский алфавит
+                shift_direction = shift if encrypt else -shift
+                offset = 65 if char.isupper() else 97
+                result += chr((ord(char) - offset + shift_direction) % 26 + offset)
         else:
             result += char
     return result
@@ -20,9 +25,14 @@ def caesar_cipher(text, shift, encrypt=True):
 def atbash_cipher(text):
     result = ""
     for char in text:
-        if char.isalpha():  # Проверяем, является ли символ буквой
-            offset = 65 if char.isupper() else 97  # Определяем, заглавная или строчная буква
-            result += chr(25 - (ord(char) - offset) + offset)  # Применяем шифр Атбаш
+        if 'А' <= char <= 'Я':  # Русский заглавный алфавит
+            result += chr(1040 + (32 - (ord(char) - 1040)))
+        elif 'а' <= char <= 'я':  # Русский строчный алфавит
+            result += chr(1072 + (32 - (ord(char) - 1072)))
+        elif 'A' <= char <= 'Z':  # Латинский заглавный алфавит
+            result += chr(65 + (25 - (ord(char) - 65)))
+        elif 'a' <= char <= 'z':  # Латинский строчный алфавит
+            result += chr(97 + (25 - (ord(char) - 97)))
         else:
             result += char  # Оставляем любой другой символ как есть
     return result
@@ -35,12 +45,20 @@ def vigenere_cipher(text, key, encrypt=True):
     key_index = 0
     for char in text:
         if char.isalpha():
-            shift = ord(key[key_index % len(key)]) - ord('a')
-            if not encrypt:
-                shift = -shift
-            offset = 65 if char.isupper() else 97
-            result += chr((ord(char) - offset + shift) % 26 + offset)
-            key_index += 1
+            if 'А' <= char <= 'Я' or 'а' <= char <= 'я':  # Русский алфавит
+                shift = (ord(key[key_index % len(key)]) - 1072) % 33
+                if not encrypt:
+                    shift = -shift
+                offset = 1040 if char.isupper() else 1072
+                result += chr((ord(char) - offset + shift) % 33 + offset)
+                key_index += 1
+            elif 'A' <= char <= 'Z' or 'a' <= char <= 'z':  # Латинский алфавит
+                shift = (ord(key[key_index % len(key)]) - ord('a')) % 26
+                if not encrypt:
+                    shift = -shift
+                offset = 65 if char.isupper() else 97
+                result += chr((ord(char) - offset + shift) % 26 + offset)
+                key_index += 1
         else:
             result += char
     return result
@@ -48,8 +66,10 @@ def vigenere_cipher(text, key, encrypt=True):
 
 # Функция для шифра Плейфера
 def generate_playfair_matrix(key):
-    key = ''.join(sorted(set(key), key=key.index))
-    alphabet = string.ascii_lowercase.replace('j', '')  # Убираем букву 'j'
+    key = key.lower().replace('ё', 'е')  # Заменяем 'ё' на 'е'
+    key = ''.join(sorted(set(key), key=key.index))  # Убираем повторяющиеся символы из ключа
+    alphabet = "абвгдежзийклмнопрстуфхцчшщьыъэюя".replace('ё', 'е')  # Русский алфавит без 'ё'
+
     matrix = []
     used_letters = set()
 
@@ -64,20 +84,25 @@ def generate_playfair_matrix(key):
         if char not in used_letters:
             matrix.append(char)
 
-    return [matrix[i:i + 5] for i in range(0, 25, 5)]
-
+    # Формируем 6x6 матрицу
+    return [matrix[i:i + 6] for i in range(0, 36, 6)]
 
 def find_position(matrix, char):
-    for row in range(5):
-        for col in range(5):
+    for row in range(6):
+        for col in range(6):
             if matrix[row][col] == char:
                 return row, col
     return None
 
 
 def playfair_cipher(text, key, encrypt=True):
-    text = text.replace(' ', '').lower()
-    text = text.replace('j', 'i')  # Заменяем 'j' на 'i'
+    text = text.lower().replace('ё', 'е')  # Заменяем 'ё' на 'е'
+    text = text.replace(' ', '')  # Убираем пробелы
+
+    # Удаляем из текста символы, которые не являются буквами русского алфавита
+    alphabet = "абвгдежзийклмнопрстуфхцчшщьыъэюя"
+    text = ''.join([char for char in text if char in alphabet])
+
     matrix = generate_playfair_matrix(key)
 
     # Разбиваем текст на биграммы
@@ -88,12 +113,13 @@ def playfair_cipher(text, key, encrypt=True):
         if i + 1 < len(text):
             b = text[i + 1]
         else:
-            b = 'x'  # Добавляем 'x', если нечётное количество букв
+            b = 'х'  # Добавляем 'х', если нечётное количество букв
         if a == b:
-            b = 'x'  # Если буквы одинаковы в биграмме, добавляем 'x'
+            b = 'х'  # Если буквы одинаковы, добавляем 'х'
         bigrams.append((a, b))
         i += 2
 
+    result = []
     result = []
     for a, b in bigrams:
         row_a, col_a = find_position(matrix, a)
@@ -102,21 +128,21 @@ def playfair_cipher(text, key, encrypt=True):
         if row_a == row_b:
             # Если обе буквы в одной строке, сдвигаем их вправо (или влево при дешифровке)
             if encrypt:
-                result.append(matrix[row_a][(col_a + 1) % 5])
-                result.append(matrix[row_b][(col_b + 1) % 5])
+                result.append(matrix[row_a][(col_a + 1) % 6])
+                result.append(matrix[row_b][(col_b + 1) % 6])
             else:
-                result.append(matrix[row_a][(col_a - 1) % 5])
-                result.append(matrix[row_b][(col_b - 1) % 5])
+                result.append(matrix[row_a][(col_a - 1) % 6])
+                result.append(matrix[row_b][(col_b - 1) % 6])
         elif col_a == col_b:
-        # Если обе буквы в одном столбце, сдвигаем их вниз (или вверх при дешифровке)
+            # Если обе буквы в одном столбце, сдвигаем их вниз (или вверх при дешифровке)
             if encrypt:
-                result.append(matrix[(row_a + 1) % 5][col_a])
-                result.append(matrix[(row_b + 1) % 5][col_b])
+                result.append(matrix[(row_a + 1) % 6][col_a])
+                result.append(matrix[(row_b + 1) % 6][col_b])
             else:
-                result.append(matrix[(row_a - 1) % 5][col_a])
-                result.append(matrix[(row_b - 1) % 5][col_b])
+                result.append(matrix[(row_a - 1) % 6][col_a])
+                result.append(matrix[(row_b - 1) % 6][col_b])
         else:
-        # Если буквы находятся в разных строках и столбцах, заменяем их на буквы в углах прямоугольника
+            # Если буквы находятся в разных строках и столбцах, заменяем их на буквы в углах прямоугольника
             result.append(matrix[row_a][col_b])
             result.append(matrix[row_b][col_a])
 
@@ -201,6 +227,8 @@ if cipher_choice == "Цезарь":
     shift = st.slider("Сдвиг", min_value=1, max_value=25, value=3)
 elif cipher_choice == "Виженер":
     key = st.text_input("Ключевое слово", value="ключ", key="vigenere_key")
+elif cipher_choice == "Плейфер":
+    key2 = st.text_input("Ключевое слово", value="ключ", key="key")
 
 # Генерация и хранение ключей для RSA
 if cipher_choice == "RSA":
@@ -219,7 +247,7 @@ with col1:
         elif cipher_choice == "Виженер":
             output_text = vigenere_cipher(input_text, key, encrypt=True)
         elif cipher_choice == "Плейфер":
-            output_text = playfair_cipher(input_text, key="ключ", encrypt=True)
+            output_text = playfair_cipher(input_text, key2, encrypt=True)
         elif cipher_choice == "RSA":
             output_text = rsa_encrypt(input_text, public_key)
 
@@ -233,7 +261,7 @@ with col2:
         elif cipher_choice == "Виженер":
             output_text = vigenere_cipher(input_text, key, encrypt=False)  # Для дешифровки используем encrypt=False
         elif cipher_choice == "Плейфер":
-            output_text = playfair_cipher(input_text, key="ключ",
+            output_text = playfair_cipher(input_text, key2,
                                           encrypt=False)  # Для дешифровки используем encrypt=False
         elif cipher_choice == "RSA":
             try:
