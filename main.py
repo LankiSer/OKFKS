@@ -264,6 +264,13 @@ with col2:
             except ValueError:
                 output_text = "Ошибка при дешифровке RSA. Проверьте зашифрованный текст."
 
+
+# Состояния для поля ввода и результата
+if 'input_text' not in st.session_state:
+    st.session_state['input_text'] = ""
+if 'output_text' not in st.session_state:
+    st.session_state['output_text'] = ""
+
 # Обработка кнопки "Скопировать"
 with col3:
     if st.button("Скопировать"):
