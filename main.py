@@ -265,6 +265,7 @@ with col1:
         elif cipher_choice == "RSA":
             st.session_state.output_text = rsa_encrypt(input_text, public_key)
 
+
 # Обработка кнопки "Расшифровать"
 with col2:
     if st.button("Расшифровать"):
@@ -278,11 +279,11 @@ with col2:
             st.session_state.output_text = playfair_cipher(input_text, st.session_state.key2, encrypt=False)
         elif cipher_choice == "RSA":
             try:
-                cipher_text = list(map(int, input_text.split()))
-                st.session_state.output_text = rsa_decrypt(cipher_text, private_key)
+                cipher_text = list(map(int, input_text.split()))  # Преобразуем строку обратно в числа
+                st.session_state.output_text = rsa_decrypt(cipher_text, st.session_state.private_key)
             except ValueError:
                 st.session_state.output_text = "Ошибка при дешифровке RSA."
-
+                
 # Кнопка "Очистить"
 if st.button("Очистить"):
     st.session_state['input_text'] = ""
