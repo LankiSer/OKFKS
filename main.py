@@ -269,17 +269,18 @@ with col2:
             except ValueError:
                 st.session_state.output_text = "Ошибка при дешифровке RSA. Проверьте зашифрованный текст."
 
-# Обработка кнопки "Скопировать"
 with col3:
     if st.button("Скопировать"):
-        # Копируем результат в поле ввода (очищая старый ввод)
-        st.session_state.input_text = st.session_state.output_text
-
+        # Копируем результат в поле ввода (перемещаем вывод в ввод)
+        st.session_state['input_text'] = st.session_state['output_text']
+        st.experimental_rerun()  # Перезагрузка интерфейса для обновления поля ввода
+        
 # Обработка кнопки "Очистить"
 if st.button("Очистить"):
     # Очищаем оба поля
-    st.session_state.input_text = ""
-    st.session_state.output_text = ""
+    st.session_state['input_text'] = ""
+    st.session_state['output_text'] = ""
+    st.experimental_rerun()  # Перезагрузка интерфейса для применения изменений
 
 # Вывод результата в текстовое поле (заблокированное для редактирования)
 st.text_area("Результат", value=st.session_state.output_text, height=200, key="output_text_area", disabled=True)
