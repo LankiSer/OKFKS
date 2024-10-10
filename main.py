@@ -2,7 +2,6 @@ import streamlit as st
 import string
 import random
 
-
 # Функция для шифра Цезаря
 def caesar_cipher(text, shift, encrypt=True):
     result = ""
@@ -20,7 +19,6 @@ def caesar_cipher(text, shift, encrypt=True):
             result += char
     return result
 
-
 # Функция для шифра Атбаш
 def atbash_cipher(text):
     result = ""
@@ -36,7 +34,6 @@ def atbash_cipher(text):
         else:
             result += char  # Оставляем любой другой символ как есть
     return result
-
 
 # Функция для шифра Виженера
 def vigenere_cipher(text, key, encrypt=True):
@@ -62,7 +59,6 @@ def vigenere_cipher(text, key, encrypt=True):
         else:
             result += char
     return result
-
 
 # Функция для шифра Плейфера
 def generate_playfair_matrix(key):
@@ -94,7 +90,6 @@ def find_position(matrix, char):
                 return row, col
     return None
 
-
 def playfair_cipher(text, key, encrypt=True):
     text = text.lower().replace('ё', 'е')  # Заменяем 'ё' на 'е'
     text = text.replace(' ', '')  # Убираем пробелы
@@ -119,7 +114,6 @@ def playfair_cipher(text, key, encrypt=True):
         bigrams.append((a, b))
         i += 2
 
-    result = []
     result = []
     for a, b in bigrams:
         row_a, col_a = find_position(matrix, a)
@@ -235,7 +229,7 @@ if cipher_choice == "RSA":
     public_key, private_key = generate_rsa_keypair()
 
 # Кнопки
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 # Обработка кнопки "Зашифровать"
 with col1:
@@ -261,8 +255,7 @@ with col2:
         elif cipher_choice == "Виженер":
             output_text = vigenere_cipher(input_text, key, encrypt=False)  # Для дешифровки используем encrypt=False
         elif cipher_choice == "Плейфер":
-            output_text = playfair_cipher(input_text, key2,
-                                          encrypt=False)  # Для дешифровки используем encrypt=False
+            output_text = playfair_cipher(input_text, key2, encrypt=False)  # Для дешифровки используем encrypt=False
         elif cipher_choice == "RSA":
             try:
                 # Пытаемся расшифровать текст, если он был зашифрован с помощью RSA
@@ -271,21 +264,14 @@ with col2:
             except ValueError:
                 output_text = "Ошибка при дешифровке RSA. Проверьте зашифрованный текст."
 
+# Обработка кнопки "Скопировать"
+with col3:
+    if st.button("Скопировать"):
+        st.write(f"Результат скопирован: {output_text}")
+
+# Обработка кнопки "Очистить"
+if st.button("Очистить"):
+    output_text = ""
+
 # Вывод результата в текстовое поле (заблокированное для редактирования)
 st.text_area("Результат", value=output_text, height=200, key="output_text", disabled=True)
-
-# Sidebar with cipher descriptions
-st.sidebar.title('Описание шифраторов')
-
-if cipher_choice == "Цезарь":
-    st.sidebar.write("Шифр Цезаря - это метод шифрования, в котором каждый символ в тексте сдвигается на определенное количество позиций в алфавите. Этот шифр был использован Юлием Цезарем для секретной переписки.")
-elif cipher_choice == "Атбаш":
-    st.sidebar.write("Шифр Атбаш - это простой метод шифрования, в котором каждая буква алфавита заменяется на его зеркальный символ. Например, 'A' заменяется на 'Z', 'B' на 'Y' и т.д.")
-elif cipher_choice == "Виженер":
-    st.sidebar.write("Шифр Виженера - это метод шифрования, который использует ключевое слово для последовательного шифрования текста. Каждая буква текста шифруется с использованием соответствующей буквы ключевого слова.")
-elif cipher_choice == "Плейфер":
-    st.sidebar.write("Шифр Плейфера - это метод шифрования, который использует квадратную таблицу (матрицу) из букв алфавита для замены пар букв в тексте. Этот шифр был разработан в 1854 году английским криптографом Чарльзом Уильямом Плейфером.")
-elif cipher_choice == "RSA":
-    st.sidebar.write("RSA (Rivest-Shamir-Adleman) - это криптосистема шифрования с открытым ключом, которая используется для защиты данных в сети Интернет. Он был изобретен в 1977 году тремя математиками: Роном Ривестом, Ади Шамиром и Леонардом Адлеманом.")
-
-st.sidebar.write("Студент: Кострицын Илья, ИСП-322П")
