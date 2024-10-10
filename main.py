@@ -212,6 +212,10 @@ if 'key' not in st.session_state:
     st.session_state['key'] = "ключ"  # Значение по умолчанию для Виженера
 if 'key2' not in st.session_state:
     st.session_state['key2'] = "ключ"  # Значение по умолчанию для Плейфера
+if 'public_key' not in st.session_state:
+    st.session_state['public_key'] = None
+if 'private_key' not in st.session_state:
+    st.session_state['private_key'] = None
 
 # Интерфейс Streamlit
 st.title('Шифраторы')
@@ -224,9 +228,9 @@ cipher_choice = st.selectbox(
 
 # Поля для ввода текста и результат
 input_text = st.text_area("Введите текст", value=st.session_state.input_text, height=200, key="input_text_area")
-output_text = ""
+output_text = st.text_area("Результат", value=st.session_state.output_text, height=200, key="output_text_area", disabled=True)
 
-# Поля для дополнительных параметров (например, сдвиг или ключ)
+# Поля для дополнительных параметров
 if cipher_choice == "Цезарь":
     shift = st.slider("Сдвиг", min_value=1, max_value=25, value=3, key="caesar_shift")
 elif cipher_choice == "Виженер":
@@ -245,7 +249,7 @@ if cipher_choice == "RSA":
         private_key = st.session_state['private_key']
 
 # Кнопки
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 # Обработка кнопки "Зашифровать"
 with col1:
@@ -255,9 +259,9 @@ with col1:
         elif cipher_choice == "Атбаш":
             st.session_state.output_text = atbash_cipher(input_text)
         elif cipher_choice == "Виженер":
-            st.session_state.output_text = vigenere_cipher(input_text, key, encrypt=True)
+            st.session_state.output_text = vigenere_cipher(input_text, st.session_state.key, encrypt=True)
         elif cipher_choice == "Плейфер":
-            st.session_state.output_text = playfair_cipher(input_text, key2, encrypt=True)
+            st.session_state.output_text = playfair_cipher(input_text, st.session_state.key2, encrypt=True)
         elif cipher_choice == "RSA":
             st.session_state.output_text = rsa_encrypt(input_text, public_key)
 
@@ -267,32 +271,26 @@ with col2:
         if cipher_choice == "Цезарь":
             st.session_state.output_text = caesar_cipher(input_text, shift, encrypt=False)
         elif cipher_choice == "Атбаш":
-            st.session_state.output_text = atbash_cipher(input_text)  # Симметричный шифр
+            st.session_state.output_text = atbash_cipher(input_text)
         elif cipher_choice == "Виженер":
-            st.session_state.output_text = vigenere_cipher(input_text, key, encrypt=False)
+            st.session_state.output_text = vigenere_cipher(input_text, st.session_state.key, encrypt=False)
         elif cipher_choice == "Плейфер":
-            st.session_state.output_text = playfair_cipher(input_text, key2, encrypt=False)
+            st.session_state.output_text = playfair_cipher(input_text, st.session_state.key2, encrypt=False)
         elif cipher_choice == "RSA":
             try:
-                cipher_text = list(map(int, input_text.split()))  # Преобразуем строку обратно в числа
+                cipher_text = list(map(int, input_text.split()))
                 st.session_state.output_text = rsa_decrypt(cipher_text, private_key)
             except ValueError:
-                st.session_state.output_text = "Ошибка при дешифровке RSA. Проверьте зашифрованный текст."
+                st.session_state.output_text = "Ошибка при дешифровке RSA."
 
-with col3:
-    if st.button("Скопировать"):
-        # Копируем результат в поле ввода (перемещаем вывод в ввод)
-        st.session_state['input_text'] = st.session_state['output_text']
-        st.experimental_rerun()  # Перезагрузка интерфейса для обновления поля ввода   
-        
-    if st.button("Очистить"):
-        # Очищаем оба поля
-        st.session_state['input_text'] = ""
-        st.session_state['output_text'] = ""
-        st.experimental_rerun()  # Перезагрузка
+# Кнопка "Очистить"
+if st.button("Очистить"):
+    st.session_state['input_text'] = ""
+    st.session_state['output_text'] = ""
 
-
-
+# Кнопка "Скопировать"
+if st.button("Скопировать"):
+    st.session_state['input_text'] = st.session_state['output_text']
 
 # Вывод результата в текстовое поле (заблокированное для редактирования)
 st.text_area("Результат", value=st.session_state.output_text, height=200, key="output_text_area", disabled=True)
