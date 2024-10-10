@@ -267,11 +267,14 @@ with col2:
 # Обработка кнопки "Скопировать"
 with col3:
     if st.button("Скопировать"):
-        st.write(f"Результат скопирован: {output_text}")
+        # Копируем результат в поле ввода (очищая старый ввод)
+        st.session_state['input_text'] = st.session_state['output_text']
 
 # Обработка кнопки "Очистить"
 if st.button("Очистить"):
-    output_text = ""
+    # Очищаем оба поля
+    st.session_state['input_text'] = ""
+    st.session_state['output_text'] = ""
 
 # Вывод результата в текстовое поле (заблокированное для редактирования)
 st.text_area("Результат", value=output_text, height=200, key="output_text", disabled=True)
