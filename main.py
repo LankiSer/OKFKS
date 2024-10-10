@@ -202,6 +202,11 @@ def rsa_decrypt(cipher, private_key):
     except ValueError:
         # Если символы выходят за пределы допустимого диапазона chr(), возвращаем байтовое представление
         return ''.join([str(char) for char in plain])
+# Инициализация состояния
+if 'input_text' not in st.session_state:
+    st.session_state['input_text'] = ""
+if 'output_text' not in st.session_state:
+    st.session_state['output_text'] = ""
 
 # Интерфейс Streamlit
 st.title('Шифраторы')
@@ -212,17 +217,17 @@ cipher_choice = st.selectbox(
     ["Цезарь", "Атбаш", "Виженер", "Плейфер", "RSA"]
 )
 
-# Поля для ввода текста и результата
-input_text = st.text_area("Введите текст", height=200, key="input_text")
+# Поля для ввода текста и результат
+input_text = st.text_area("Введите текст", value=st.session_state.input_text, height=200, key="input_text_area")
 output_text = ""
 
 # Поля для дополнительных параметров (например, сдвиг или ключ)
 if cipher_choice == "Цезарь":
-    shift = st.slider("Сдвиг", min_value=1, max_value=25, value=3)
+    shift = st.slider("Сдвиг", min_value=1, max_value=25, value=3, key="caesar_shift")
 elif cipher_choice == "Виженер":
     key = st.text_input("Ключевое слово", value="ключ", key="vigenere_key")
 elif cipher_choice == "Плейфер":
-    key2 = st.text_input("Ключевое слово", value="ключ", key="key")
+    key2 = st.text_input("Ключевое слово", value="ключ", key="playfair_key")
 
 # Генерация и хранение ключей для RSA
 if cipher_choice == "RSA":
@@ -235,53 +240,46 @@ col1, col2, col3 = st.columns(3)
 with col1:
     if st.button("Зашифровать"):
         if cipher_choice == "Цезарь":
-            output_text = caesar_cipher(input_text, shift, encrypt=True)
+            st.session_state.output_text = caesar_cipher(input_text, shift, encrypt=True)
         elif cipher_choice == "Атбаш":
-            output_text = atbash_cipher(input_text)
+            st.session_state.output_text = atbash_cipher(input_text)
         elif cipher_choice == "Виженер":
-            output_text = vigenere_cipher(input_text, key, encrypt=True)
+            st.session_state.output_text = vigenere_cipher(input_text, key, encrypt=True)
         elif cipher_choice == "Плейфер":
-            output_text = playfair_cipher(input_text, key2, encrypt=True)
+            st.session_state.output_text = playfair_cipher(input_text, key2, encrypt=True)
         elif cipher_choice == "RSA":
-            output_text = rsa_encrypt(input_text, public_key)
+            st.session_state.output_text = rsa_encrypt(input_text, public_key)
 
 # Обработка кнопки "Расшифровать"
 with col2:
     if st.button("Расшифровать"):
         if cipher_choice == "Цезарь":
-            output_text = caesar_cipher(input_text, shift, encrypt=False)
+            st.session_state.output_text = caesar_cipher(input_text, shift, encrypt=False)
         elif cipher_choice == "Атбаш":
-            output_text = atbash_cipher(input_text)  # Шифр Атбаш симметричный, шифрование и дешифрование одинаково
+            st.session_state.output_text = atbash_cipher(input_text)  # Шифр Атбаш симметричный, шифрование и дешифрование одинаково
         elif cipher_choice == "Виженер":
-            output_text = vigenere_cipher(input_text, key, encrypt=False)  # Для дешифровки используем encrypt=False
+            st.session_state.output_text = vigenere_cipher(input_text, key, encrypt=False)  # Для дешифровки используем encrypt=False
         elif cipher_choice == "Плейфер":
-            output_text = playfair_cipher(input_text, key2, encrypt=False)  # Для дешифровки используем encrypt=False
+            st.session_state.output_text = playfair_cipher(input_text, key2, encrypt=False)  # Для дешифровки используем encrypt=False
         elif cipher_choice == "RSA":
             try:
                 # Пытаемся расшифровать текст, если он был зашифрован с помощью RSA
                 cipher_text = list(map(int, input_text.split()))  # Преобразуем строку обратно в числа
-                output_text = rsa_decrypt(cipher_text, private_key)
+                st.session_state.output_text = rsa_decrypt(cipher_text, private_key)
             except ValueError:
-                output_text = "Ошибка при дешифровке RSA. Проверьте зашифрованный текст."
-
-
-# Состояния для поля ввода и результата
-if 'input_text' not in st.session_state:
-    st.session_state['input_text'] = ""
-if 'output_text' not in st.session_state:
-    st.session_state['output_text'] = ""
+                st.session_state.output_text = "Ошибка при дешифровке RSA. Проверьте зашифрованный текст."
 
 # Обработка кнопки "Скопировать"
 with col3:
     if st.button("Скопировать"):
         # Копируем результат в поле ввода (очищая старый ввод)
-        st.session_state['input_text'] = st.session_state['output_text']
+        st.session_state.input_text = st.session_state.output_text
 
 # Обработка кнопки "Очистить"
 if st.button("Очистить"):
     # Очищаем оба поля
-    st.session_state['input_text'] = ""
-    st.session_state['output_text'] = ""
+    st.session_state.input_text = ""
+    st.session_state.output_text = ""
 
 # Вывод результата в текстовое поле (заблокированное для редактирования)
-st.text_area("Результат", value=output_text, height=200, key="output_text", disabled=True)
+st.text_area("Результат", value=st.session_state.output_text, height=200, key="output_text_area", disabled=True)
